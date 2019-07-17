@@ -3,12 +3,19 @@ package vn.hunghd.flutter.plugins.imagecropper;
 import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Matrix;
 import android.net.Uri;
+import android.os.Environment;
+import android.provider.MediaStore;
 
 import com.yalantis.ucrop.UCrop;
 
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.Date;
 
 import io.flutter.plugin.common.MethodCall;
@@ -96,7 +103,15 @@ public class ImageCropperDelegate implements PluginRegistry.ActivityResultListen
         if (requestCode == UCrop.REQUEST_CROP) {
             if (resultCode == RESULT_OK) {
                 final Uri resultUri = UCrop.getOutput(data);
-                finishWithSuccess(fileUtils.getPathFromUri(activity, resultUri));
+              
+                Bitmap bitmap= null;
+                try {
+                    bitmap = MediaStore.Images.Media.getBitmap(activity.getContentResolver(),resultUri);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                finishWithSuccess(saveBitmap(imageScale(bitmap,1080,1920)));
+//                finishWithSuccess(fileUtils.getPathFromUri(activity, resultUri));
                 return true;
             } else if (resultCode == UCrop.RESULT_ERROR) {
                 final Throwable cropError = UCrop.getError(data);
@@ -111,6 +126,49 @@ public class ImageCropperDelegate implements PluginRegistry.ActivityResultListen
         return false;
     }
 
+    /**
+     * 改变图片大小
+     * @param bitmap
+     * @param dst_w 指定宽度
+     * @param dst_h 指定高度
+     * @return
+     */
+    public static Bitmap imageScale(Bitmap bitmap, int dst_w, int dst_h) {
+        int src_w = bitmap.getWidth();
+        int src_h = bitmap.getHeight();
+        float scale_w = ((float) dst_w) / src_w;
+        float scale_h = ((float) dst_h) / src_h;
+        Matrix matrix = new Matrix();
+        matrix.postScale(scale_w, scale_h);
+        Bitmap dstbmp = Bitmap.createBitmap(bitmap, 0, 0, src_w, src_h, matrix,
+                true);
+        return dstbmp;
+    }
+
+    /**
+     * 保存图片 @param bitmap @return
+     */
+    private String saveBitmap(Bitmap bitmap) {
+        String picPath;
+        String sdCardDir = Environment.getExternalStorageDirectory() + "/DCIM";
+        File appDir = new File(sdCardDir, "Camera");
+        if (!appDir.exists()) appDir.mkdir();
+        String fileName = System.currentTimeMillis() + ".jpg";
+        File f = new File(appDir, fileName);
+        try {
+            FileOutputStream fos = new FileOutputStream(f);
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 100, fos);
+            fos.flush();
+            fos.close();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        picPath = sdCardDir + "/Camera/" + fileName;
+        return picPath;
+    }
+    
     private void finishWithSuccess(String imagePath) {
         pendingResult.success(imagePath);
         clearMethodCallAndResult();
