@@ -112,7 +112,11 @@ public class ImageCropperDelegate implements PluginRegistry.ActivityResultListen
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
-                finishWithSuccess(saveBitmap(imageScale(bitmap,maxWidth,maxHeight)));
+                if (maxWidth != null && maxHeight != null) {
+                    finishWithSuccess(saveBitmap(imageScale(bitmap, maxWidth, maxHeight)));
+                }else{
+                    finishWithSuccess(saveBitmap(imageScale(bitmap, 1080, 1080)));
+                }
 //                finishWithSuccess(fileUtils.getPathFromUri(activity, resultUri));
                 return true;
             } else if (resultCode == UCrop.RESULT_ERROR) {
