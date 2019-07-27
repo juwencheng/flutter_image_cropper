@@ -29,6 +29,8 @@ public class ImageCropperDelegate implements PluginRegistry.ActivityResultListen
     private MethodChannel.Result pendingResult;
     private MethodCall methodCall;
     private FileUtils fileUtils;
+    private Integer maxWidth=1080;
+    private Integer maxHeight=1080;
 
     public ImageCropperDelegate(Activity activity) {
         this.activity = activity;
@@ -37,8 +39,8 @@ public class ImageCropperDelegate implements PluginRegistry.ActivityResultListen
 
     public void startCrop(MethodCall call, MethodChannel.Result result) {
         String sourcePath = call.argument("source_path");
-        Integer maxWidth = call.argument("max_width");
-        Integer maxHeight = call.argument("max_height");
+         maxWidth = call.argument("max_width");
+         maxHeight = call.argument("max_height");
         Double ratioX = call.argument("ratio_x");
         Double ratioY = call.argument("ratio_y");
         Boolean circleShape = call.argument("circle_shape");
@@ -110,7 +112,7 @@ public class ImageCropperDelegate implements PluginRegistry.ActivityResultListen
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
-                finishWithSuccess(saveBitmap(imageScale(bitmap,1080,1920)));
+                finishWithSuccess(saveBitmap(imageScale(bitmap,maxWidth,maxHeight)));
 //                finishWithSuccess(fileUtils.getPathFromUri(activity, resultUri));
                 return true;
             } else if (resultCode == UCrop.RESULT_ERROR) {
